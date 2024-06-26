@@ -3,12 +3,8 @@ import { Ctx, Message, On, Start, Update } from 'nestjs-telegraf';
 import { ConfigService } from '@nestjs/config';
 import { ChatgptService } from 'src/chatgpt/chatgpt.service';
 import { Logger } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as handlebars from 'handlebars';
-
-import { GreetingTemplateData } from 'src/types/template.types';
 import { PlayerService } from 'src/player/player.service';
+import { TemplateService } from 'src/template/template.service';
 
 interface Context extends Scenes.SceneContext {}
 
@@ -16,24 +12,13 @@ interface Context extends Scenes.SceneContext {}
 export class TelegramService extends Telegraf<Context> {
   private readonly logger = new Logger(TelegramService.name);
 
-  private readonly greetingsTemplate: HandlebarsTemplateDelegate<GreetingTemplateData>;
-  private readonly styles: string;
-
   constructor(
     private readonly configService: ConfigService,
     private readonly chatGptService: ChatgptService,
     private readonly playerService: PlayerService,
+    private readonly templateService: TemplateService,
   ) {
     super(configService.get('TELEGRAM_API'));
-    const templateFilePath = path.join(
-      process.cwd(),
-      'client',
-      'templates',
-      'greetings.html',
-    );
-
-    const templateFile = fs.readFileSync(templateFilePath, 'utf8');
-    this.greetingsTemplate = handlebars.compile(templateFile);
   }
 
   @Start()
@@ -48,7 +33,7 @@ export class TelegramService extends Telegraf<Context> {
         `${firstName} ${lastName}`,
       );
 
-      const htmlContent = this.renderTemplate({
+      const htmlContent = this.templateService.renderTemplate('greetings', {
         firstTime: isNew,
         firstName,
         lastName,
@@ -71,10 +56,6 @@ export class TelegramService extends Telegraf<Context> {
     } catch (error) {
       this.handleCustomError(ctx, 'Error during message processing', error);
     }
-  }
-
-  private renderTemplate(data: GreetingTemplateData): string {
-    return this.greetingsTemplate(data);
   }
 
   private handleCustomError(ctx: Context, message: string, error: unknown) {
