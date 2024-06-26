@@ -22,4 +22,13 @@ export class PlayerService {
     }
     return { player, isNew };
   }
+
+  async getPlayerInfo(telegramId: bigint) {
+    const player = await this.prismaService.player.findUniqueOrThrow({
+      where: { telegram_id: telegramId },
+      include: { character: true },
+    });
+
+    return player;
+  }
 }

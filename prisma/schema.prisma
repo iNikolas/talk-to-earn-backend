@@ -3,24 +3,24 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model Player {
-  user_id           Int        @id @default(autoincrement())
-  telegram_id       BigInt     @unique
-  name              String
-  registration_date DateTime   @default(now())
-  coins             Int        @default(5000)
-  referred_by_id    Int?
-  referredBy        Player?    @relation("Referral", fields: [referred_by_id], references: [user_id])
-  referrals         Player[]   @relation("Referral")
-  character         Character?
+  user_id                 String     @id @default(auto()) @map("_id") @db.ObjectId
+  telegram_id             BigInt     @unique
+  name                    String
+  registration_date       DateTime   @default(now())
+  coins                   Int        @default(5000)
+  referred_by_telegram_id BigInt?
+  referred_by             Player?    @relation("Referral", fields: [referred_by_telegram_id], references: [telegram_id], onDelete: NoAction, onUpdate: NoAction)
+  referrals               Player[]   @relation("Referral")
+  character               Character?
 }
 
 model Character {
-  character_id Int     @id @default(autoincrement())
-  user_id      Int     @unique
-  user         Player? @relation(references: [user_id], fields: [user_id])
+  character_id String  @id @default(auto()) @map("_id") @db.ObjectId
+  telegram_id  BigInt  @unique
+  user         Player? @relation(references: [telegram_id], fields: [telegram_id])
 }
