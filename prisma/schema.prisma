@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Roles {
+  admin
+  user
+}
+
+model User {
+  user_id        Int        @id @default(autoincrement())
+  telegram_id    Int        @unique
+  name           String
+  role           Roles
+  coins          Int        @default(5000)
+  referred_by_id Int?
+  referredBy     User?      @relation("Referral", fields: [referred_by_id], references: [user_id])
+  referrals      User[]     @relation("Referral")
+  character      Character?
+}
+
+model Character {
+  character_id Int   @id @default(autoincrement())
+  user_id      Int   @unique
+  user         User? @relation(references: [user_id], fields: [user_id])
+}
