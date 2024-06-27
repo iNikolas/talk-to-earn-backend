@@ -5,6 +5,7 @@ import { join } from 'path';
 
 import { TelegramModule } from './telegram/telegram.module';
 import { PrismaService } from './prisma.service';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { PrismaService } from './prisma.service';
       rootPath: join(__dirname, '..', 'client'),
     }),
     TelegramModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [PrismaService],
