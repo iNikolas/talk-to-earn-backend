@@ -19,8 +19,32 @@ export class PlayerService {
           name,
         },
       });
+
+      await this.createCharacter(telegramId);
     }
     return { player, isNew };
+  }
+
+  async createCharacter(telegramId: bigint) {
+    const player = await this.prismaService.player.findUnique({
+      where: { telegram_id: telegramId },
+    });
+
+    if (!player) {
+      throw new Error('Player not found');
+    }
+
+    const characterExists = await this.prismaService.character.findUnique({
+      where: { telegram_id: telegramId },
+    });
+
+    if (!characterExists) {
+      return await this.prismaService.character.create({
+        data: {
+          telegram_id: telegramId,
+        },
+      });
+    }
   }
 
   async getPlayerInfo(telegramId: bigint) {
@@ -29,15 +53,19 @@ export class PlayerService {
       include: { character: true },
     });
 
+    let character = player.character;
+
+    if (!character) {
+      character = await this.createCharacter(telegramId);
+    }
+
     return {
       ...player,
       telegram_id: player.telegram_id.toString(),
-      character: player.character
-        ? {
-            ...player.character,
-            telegram_id: player.character.telegram_id.toString(),
-          }
-        : null,
+      character: {
+        ...character,
+        telegram_id: character.telegram_id.toString(),
+      },
     };
   }
 }
