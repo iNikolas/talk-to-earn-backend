@@ -14,7 +14,7 @@ import { LoginDTO } from './dto/login.dto';
 import { AuthService } from './auth.service';
 import { ResponseLogin, Tokens } from './types/tokens.type';
 import { RefreshTokenDTO } from './dto/refresh-token.dto';
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
@@ -41,6 +41,14 @@ export class AuthController {
   @Get('me')
   public async getUsersFromJira(@Req() req): Promise<User> {
     return await this.authService.validateUser({ email: req.user.email });
+  }
+
+  @Post('me')
+  @HttpCode(HttpStatus.OK)
+  async role(@Body() refreshTokenDTO: RefreshTokenDTO): Promise<User> {
+    return this.authService.validateUserByRefreshToken(
+      refreshTokenDTO.refreshToken,
+    );
   }
 
   @Post('refresh')

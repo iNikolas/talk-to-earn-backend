@@ -56,7 +56,6 @@ export class AuthService {
     const payload = {
       sub: user.user_id,
       email: user.email,
-      isAdmin: user.role === Role.admin,
     };
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
@@ -81,6 +80,13 @@ export class AuthService {
   }
 
   async refreshTokens(refreshToken: string): Promise<Tokens> {
+    const user = await this.validateUserByRefreshToken(refreshToken);
+    const tokens = await this.getTokens(user);
+
+    return tokens;
+  }
+
+  async validateUserByRefreshToken(refreshToken: string): Promise<User> {
     const payload = await this.jwtService.verifyAsync(refreshToken, {
       secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
     });
@@ -89,22 +95,11 @@ export class AuthService {
       throw new HttpException('Invalid refresh token', HttpStatus.UNAUTHORIZED);
     }
 
-    const user = await this.userService.findOne({ email: payload.email });
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    const tokens = await this.getTokens(user);
-
-    return tokens;
+    return await this.validateUser({ email: payload.email });
   }
 
   async validateUser(payload: Partial<User>): Promise<User> {
     const user: User = await this.userService.findOne(payload);
-    if (!user) {
-      throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
-    }
-
     delete user.password;
 
     return user;
