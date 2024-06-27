@@ -29,6 +29,15 @@ export class PlayerService {
       include: { character: true },
     });
 
-    return player;
+    return {
+      ...player,
+      telegram_id: player.telegram_id.toString(),
+      character: player.character
+        ? {
+            ...player.character,
+            telegram_id: player.character.telegram_id.toString(),
+          }
+        : null,
+    };
   }
 }
