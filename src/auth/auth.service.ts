@@ -8,7 +8,7 @@ import * as bcrypt from 'bcryptjs';
 import { LoginDTO } from './dto/login.dto';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 import { ResponseLogin, Tokens } from './types/tokens.type';
 import { ConfigService } from '@nestjs/config';
 
@@ -53,25 +53,24 @@ export class AuthService {
   }
 
   private async getTokens(user: User): Promise<Tokens> {
+    const payload = {
+      sub: user.user_id,
+      email: user.email,
+      isAdmin: user.role === Role.admin,
+    };
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(
-        { sub: user.user_id, email: user.email },
-        {
-          secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
-          expiresIn: this.configService.get<string>(
-            'JWT_ACCESS_TOKEN_EXPIRES_IN',
-          ),
-        },
-      ),
-      this.jwtService.signAsync(
-        { sub: user.user_id, email: user.email },
-        {
-          secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
-          expiresIn: this.configService.get<string>(
-            'JWT_REFRESH_TOKEN_EXPIRES_IN',
-          ),
-        },
-      ),
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
+        expiresIn: this.configService.get<string>(
+          'JWT_ACCESS_TOKEN_EXPIRES_IN',
+        ),
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+        expiresIn: this.configService.get<string>(
+          'JWT_REFRESH_TOKEN_EXPIRES_IN',
+        ),
+      }),
     ]);
 
     return {
