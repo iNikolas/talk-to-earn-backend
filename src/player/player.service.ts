@@ -89,12 +89,16 @@ export class PlayerService {
     const players = await this.prismaService.player.findMany({
       skip,
       take,
+      include: { character: true },
     });
 
     const total = await this.prismaService.player.count();
 
     return {
-      data: players.map(this.serializePlayerBigInt),
+      data: players.map((player) => ({
+        ...this.serializePlayerBigInt(player),
+        character: this.serializeCharacterBigInt(player.character),
+      })),
       total,
       page,
       limit,
