@@ -1,4 +1,11 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Query,
+  ValidationPipe,
+} from '@nestjs/common';
 import { PlayerService } from './player.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 
@@ -12,7 +19,15 @@ export class PlayerController {
   }
 
   @Get()
-  async findAll(@Query() paginationDto: PaginationDto) {
+  async findAll(
+    @Query(
+      new ValidationPipe({
+        transform: true,
+        transformOptions: { enableImplicitConversion: true },
+      }),
+    )
+    paginationDto: PaginationDto,
+  ) {
     return this.playerService.findAll(paginationDto);
   }
 }
