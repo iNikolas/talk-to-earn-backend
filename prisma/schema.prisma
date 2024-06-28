@@ -12,6 +12,10 @@ enum Role {
   admin
 }
 
+enum GameSettingType {
+  global
+}
+
 model User {
   user_id           String   @id @default(auto()) @map("_id") @db.ObjectId
   first_name        String
@@ -38,4 +42,12 @@ model Character {
   character_id String  @id @default(auto()) @map("_id") @db.ObjectId
   telegram_id  BigInt  @unique
   user         Player? @relation(references: [telegram_id], fields: [telegram_id])
+}
+
+model GameSetting {
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
+  type         GameSettingType @unique @default(global)
+  reward_coins Int             @default(1)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 }

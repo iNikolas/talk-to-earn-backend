@@ -1,11 +1,52 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Character, Player } from '@prisma/client';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { GameSettingsService } from 'src/game-settings/game-settings.service';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class PlayerService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly configService: ConfigService,
+    private readonly gameSettingsService: GameSettingsService,
+  ) {}
+
+  async rewardPlayerWithCoins(
+    telegramId: bigint,
+    reward?: number,
+  ): Promise<Player> {
+    try {
+      const player = await this.prismaService.player.findUnique({
+        where: { telegram_id: telegramId },
+      });
+
+      if (!player) {
+        throw new Error(`Player with telegramId ${telegramId} not found`);
+      }
+
+      let playerReward = reward;
+
+      if (!playerReward) {
+        const { reward_coins: baseReward } =
+          await this.gameSettingsService.getGlobalSetting();
+
+        playerReward = baseReward;
+      }
+
+      const updatedPlayer = await this.prismaService.player.update({
+        data: { coins: player.coins + playerReward },
+        where: { telegram_id: telegramId },
+      });
+
+      return updatedPlayer;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Failed to reward player with coins: ${error.message}`,
+      );
+    }
+  }
 
   async findOrCreatePlayer(telegramId: bigint, name: string) {
     let player = await this.prismaService.player.findUnique({
@@ -15,15 +56,30 @@ export class PlayerService {
     const isNew = !player;
 
     if (!player) {
-      player = await this.prismaService.player.create({
-        data: {
-          telegram_id: telegramId,
-          name,
-        },
-      });
+      try {
+        await this.prismaService.$transaction(async (prisma) => {
+          player = await prisma.player.create({
+            data: {
+              telegram_id: telegramId,
+              name,
+            },
+          });
 
-      await this.createCharacter(telegramId);
+          await prisma.character.create({
+            data: {
+              telegram_id: telegramId,
+            },
+          });
+        });
+      } catch (error) {
+        throw new InternalServerErrorException(
+          'Failed to find or create player: ' + error.message,
+        );
+      }
+
+      return { player, isNew };
     }
+
     return { player, isNew };
   }
 
@@ -55,11 +111,7 @@ export class PlayerService {
       include: { character: true },
     });
 
-    let character = player.character;
-
-    if (!character) {
-      character = await this.createCharacter(telegramId);
-    }
+    const { character } = player;
 
     return {
       ...this.serializePlayerBigInt(player),

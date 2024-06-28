@@ -11,7 +11,7 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller('player')
 export class PlayerController {
-  constructor(private playerService: PlayerService) {}
+  constructor(private readonly playerService: PlayerService) {}
 
   @Get(':telegram_id')
   getPlayerInfo(@Param('telegram_id', ParseIntPipe) telegramId: number) {

@@ -52,6 +52,8 @@ export class TelegramService extends Telegraf<Context> {
         String(ctx.from.id),
         message,
       );
+
+      await this.playerService.rewardPlayerWithCoins(BigInt(ctx.from.id));
       ctx.reply(response);
     } catch (error) {
       this.handleCustomError(ctx, 'Error during message processing', error);

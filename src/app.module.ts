@@ -6,6 +6,7 @@ import { join } from 'path';
 import { TelegramModule } from './telegram/telegram.module';
 import { PrismaService } from './prisma.service';
 import { AuthModule } from './auth/auth.module';
+import { GameSettingsModule } from './game-settings/game-settings.module';
 
 @Module({
   imports: [

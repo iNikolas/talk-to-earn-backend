@@ -14,7 +14,7 @@ import { LoginDTO } from './dto/login.dto';
 import { AuthService } from './auth.service';
 import { ResponseLogin, Tokens } from './types/tokens.type';
 import { RefreshTokenDTO } from './dto/refresh-token.dto';
-import { Role, User } from '@prisma/client';
+import { User } from '@prisma/client';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
