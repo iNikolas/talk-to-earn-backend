@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Character, Player } from '@prisma/client';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { PrismaService } from 'src/prisma.service';
 
@@ -61,12 +62,22 @@ export class PlayerService {
     }
 
     return {
+      ...this.serializePlayerBigInt(player),
+      character: this.serializeCharacterBigInt(character),
+    };
+  }
+
+  serializePlayerBigInt(player: Player) {
+    return {
       ...player,
       telegram_id: player.telegram_id.toString(),
-      character: {
-        ...character,
-        telegram_id: character.telegram_id.toString(),
-      },
+    };
+  }
+
+  serializeCharacterBigInt(character: Character) {
+    return {
+      ...character,
+      telegram_id: character.telegram_id.toString(),
     };
   }
 
@@ -83,7 +94,7 @@ export class PlayerService {
     const total = await this.prismaService.player.count();
 
     return {
-      data: players,
+      data: players.map(this.serializePlayerBigInt),
       total,
       page,
       limit,
