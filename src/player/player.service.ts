@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
@@ -66,6 +67,26 @@ export class PlayerService {
         ...character,
         telegram_id: character.telegram_id.toString(),
       },
+    };
+  }
+
+  async findAll(paginationDto: PaginationDto) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const players = await this.prismaService.player.findMany({
+      skip,
+      take,
+    });
+
+    const total = await this.prismaService.player.count();
+
+    return {
+      data: players,
+      total,
+      page,
+      limit,
     };
   }
 }
