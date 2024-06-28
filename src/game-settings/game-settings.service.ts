@@ -28,7 +28,7 @@ export class GameSettingsService {
     }
 
     const createdSetting = await this.prisma.gameSetting.create({
-      data,
+      data: data ?? {},
     });
 
     return createdSetting;
