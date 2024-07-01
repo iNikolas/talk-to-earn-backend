@@ -25,12 +25,21 @@ export class TelegramService extends Telegraf<Context> {
   async onStart(@Ctx() ctx: Context) {
     try {
       const telegramId = BigInt(ctx.from.id);
-      const firstName = ctx.from.first_name.trim();
-      const lastName = ctx.from.last_name.trim();
+      const firstName = ctx.from.first_name?.trim() ?? '';
+      const lastName = ctx.from.last_name?.trim() ?? '';
+      const username = ctx.from.username?.trim();
+
+      let name: string;
+
+      if (!firstName && !lastName) {
+        name = username ?? 'Unknown';
+      } else {
+        name = `${firstName} ${lastName}`.trim();
+      }
 
       const { player, isNew } = await this.playerService.findOrCreatePlayer(
         telegramId,
-        `${firstName} ${lastName}`,
+        name,
       );
 
       const htmlContent = this.templateService.renderTemplate('greetings', {
